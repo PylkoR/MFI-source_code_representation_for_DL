@@ -1,0 +1,21 @@
+## Core LaTeX auxiliary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+## Bibliography files
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+## VS Code folders
+.vscode/
+
+## Backup files
+*.bak
+*.sav
