@@ -84,7 +84,7 @@ Reprezentacja kodu źródłowego to proces transformacji tekstowej postaci kodu 
 
 Głównym celem tworzenia reprezentacji kodu źródłowego jest umożliwienie modelom automatycznego wykrywania skomplikowanych wzorców w strukturach programów. Wybór konkretnej metody reprezentacji jest kluczowy, ponieważ determinuje on, jakie informacje o kodzie zostaną zachowane, a jakie utracone, co bezpośrednio wpływa na skuteczność algorytmu w danym zadaniu \cite{b3}.
 
-\section{Taksonomia i formalne modelowanie reprezentacji kodu źródłowego}
+\section{Taksonomia i charakterystyka reprezentacji kodu źródłowego}
 W literaturze powtarza się dobrze utrwalona klasyfikacja reprezentacji kodu źródłowego ze względu na ich strukturę oraz poziom zawartej w nich informacji. Wyróżniamy reprezentacje leksykalne, syntaktyczne, semantyczne oraz hybrydowe i inne. 
 
 Posłużmy się przykładem kodu źródłowego napisanego w języku C w celu rozróżnienia charakterystyki każdej z wymienionych reprezentacji.
@@ -121,7 +121,10 @@ Można wyróżnić kilka głównych podejść do podziału kodu na tokeny \cite{
  'sink', '(', 'y', ')', ';', '}', '}']
 \end{lstlisting}
 
-Aby modele Deep Learning mogły uczyć się z reprezentacji leksykalnej, tokeny są przekształcane na numeryczne wektory (embeddings) za pomocą statystycznych modeli językowych, takich jak word2vec lub doc2vec. Każdy token reprezentowany jest w ten sposób jako wektor liczb rzeczywistych \cite{b2}.
+Aby modele Deep Learning mogły uczyć się z reprezentacji leksykalnej, tokeny są przekształcane na numeryczne wektory (embeddings) za pomocą statystycznych modeli językowych, takich jak word2vec lub doc2vec. Każdy token reprezentowany jest w ten sposób jako wektor liczb rzeczywistych \cite{b2}. W przypadku analizy sekwencyjnej, sieci takie jak LSTM przetwarzają te wektory krok po kroku. Matematycznie, stan ukryty $h_i^{tok}$ dla $i$-tego tokenu obliczany jest na podstawie poprzedniego stanu ukrytego oraz wektora osadzenia bieżącego słowa $w(x_i)$ \cite{b4}:
+\begin{equation}
+h_{i}^{tok} = LSTM(h_{i-1}^{tok}, w(x_{i}))
+\end{equation}
 
 \subsection{Reprezentacje Syntaktyczne (Tree-based)}
 Reprezentacja syntaktyczna modeluje kod poprzez uwzględnienie jego hierarchicznej struktury oraz reguł gramatyki użytego języka programowania. 
@@ -135,7 +138,17 @@ Najpopularniejszą strukturą w tym podejściu jest drzewo AST (Abstract Syntax 
     \label{fig:tree_representation}
 \end{figure}
 
+Drzewiasta struktura tego sposobu reprezentacji kodu źródłowego wymaga zastosowania odpowiednich modeli potrafiących obsłużyć dane hierarchiczne. Modele te – do których należą np. sieci Tree-LSTM, rekurencyjne sieci neuronowe RvNN czy oparte na drzewach sieci konwolucyjne TBCNN – obliczają osadzenia (embeddings) węzłów najczęściej w sposób rekurencyjny "od dołu do góry" (bottom-up), czyli propagując informacje od liści w stronę korzenia \cite{b3}. 
+Formalizując to podejście na przykładzie binarnego drzewa AST w modelu Tree-LSTM, węzeł $i$ agreguje informacje równolegle ze swojego lewego ($L$) i prawego ($R$) dziecka \cite{b4}:
+\begin{equation}
+(h_{i}^{ast}, c_{i}^{ast}) = LSTM(([h_{iL}^{ast}; h_{iR}^{ast}], [c_{iL}^{ast}; c_{iR}^{ast}]), w(x_{i}))
+\end{equation}
+Gdzie operator $[ ; ]$ oznacza konkatenację wektorów stanów ukrytych ($h$) oraz komórek pamięci ($c$) dzieci, a $w(x_i)$ to wektor osadzenia węzła-rodzica.
+
 \subsection{Reprezentacje Semantyczne (Graph-based)}
+Reprezentacja grafowa modeluje kod źródłowy z naciskiem na jego semantykę oraz relacje między instrukcjami. W tym podejściu program transformowany jest w graf, w którym węzły najczęściej reprezentują bloki kodu lub konkretne instrukcje, a krawędzie określają przepływ sterowania lub danych.
+
+Istnieje wiele wariantów reprezentacji grafowej, opierających się na przepływie sterowania (Control Flow Graph, CFG), przepływie danych (Data Flow Graph, DFG) czy grafie zależności programowej (Program Dependency Graph, PDG), łączącym cechy obydwu podejść \cite{b4}. Rysunek \ref{fig:graph_representation} przedstawia przykładową reprezentację kodu źródłowego w formie grafu przepływu sterowania CFG oraz grafu zależności programowej PDG.
 
 \begin{figure}[h]
     \centering
@@ -144,7 +157,20 @@ Najpopularniejszą strukturą w tym podejściu jest drzewo AST (Abstract Syntax 
     \label{fig:graph_representation}
 \end{figure}
 
+Aby skutecznie uczyć się z tak złożonych i nieliniowych struktur, stosuje się modele takie jak Gated Graph Neural Networks (GGNN). Wykorzystują one iteracyjny mechanizm przekazywania wiadomości (ang. \textit{message passing}). W danej rundzie $t$, węzeł $v$ odbiera sumę wiadomości $m$ od swoich sąsiadów $N(v)$ w grafie, a następnie aktualizuje swój stan ukryty za pomocą bramkowanej jednostki rekurencyjnej (np. GRU) \cite{b4}:
+\begin{align}
+m_{v,t+1} &= \sum_{v' \in N(v)} W_{l_e} h_{v',t} \\
+h_{v,t+1}^{cfg} &= GRU(h_{v,t}^{cfg}, m_{v,t+1})
+\end{align}
+
 \subsection{Reprezentacje Hybrydowe i Pośrednie}
+Podejścia hybrydowe integrują wiele modalności naraz (np. tokeny, drzewa AST i grafy CFG) w celu uzyskania kompleksowej reprezentacji kodu źródłowego. Takie rozwiązanie kompensuje wady pojedynczych metod, łącząc wiedzę o sekwencji, gramatyce i logice wykonania.
+
+Doskonałym przykładem tego podejścia jest sieć MMAN (Multi-Modal Attention Network) \cite{b4}. Przetwarza ona każdą reprezentację dedykowanym jej modelem (LSTM dla tokenów, Tree-LSTM dla AST oraz GGNN dla CFG), a następnie wykorzystuje mechanizm uwagi (ang. \textit{attention}). Mechanizm ten przypisuje wagi ($\alpha$) poszczególnym elementom wewnątrz każdej modalności, co pozwala zidentyfikować fragmenty najbardziej istotne dla semantyki programu. Ostateczna, wielomodalna reprezentacja programu $x$ powstaje poprzez konkatenację średnich ważonych z każdego modelu i transformację przez macierz wag $W$ \cite{b4}:
+\begin{equation}
+x = W[\sum_{i} \alpha_i^{tok} h_i^{tok}; \sum_{i} \alpha_i^{ast} h_i^{ast}; \sum_{i} \alpha_i^{cfg} h_i^{cfg}]
+\end{equation}
+Dzięki takiej fuzji model jest w stanie jednocześnie skupić uwagę na istotnej nazwie zmiennej z reprezentacji leksykalnej, kluczowym węźle operacyjnym z drzewa AST oraz strategicznym rozgałęzieniu logiki w grafie CFG.
 
 \section{Zastosowanie reprezentacji kodu źródłowego w problemach inżynierii oprogramowania}
 tutaj o taskach SE w jakich stosuje się reprezentację kodu źródłowego czyli wykrywanie podatności, podsumowywanie kodu, detekcja klonowania itp.
@@ -160,7 +186,8 @@ Wnioski dotyczące wyboru optymalnej reprezentacji w zależności od dostępnych
 \bibitem{b1} Shanmugasundaram, D., Arivukkarasu, P., Chen, H., \& Cai, H. (2025). Deep Learning Representations of Programs: A Systematic Literature Review. ACM Computing Surveys, 58(5), 1-37.
 \bibitem{b2} Samoaa, H. P., Bayram, F., Salza, P., \& Leitner, P. (2022). A systematic mapping study of source code representation for deep learning in software engineering. IET Software, 16(4), 351-385.
 \bibitem{b3} Siow, J. K., Liu, S., Xie, X., Meng, G., \& Liu, Y. (2022, March). Learning program semantics with code representations: An empirical study. In 2022 IEEE international conference on software analysis, evolution and reengineering (SANER) (pp. 554-565). IEEE.
-\bibitem{b4} Brauckmann, A., Goens, A., Ertel, S., \& Castrillon, J. (2020, February). Compiler-based graph representations for deep learning models of code. In Proceedings of the 29th International Conference on Compiler Construction (pp. 201-211).
-\bibitem{b5} Casey, B., Santos, J. C., \& Perry, G. (2025). A survey of source code representations for machine learning-based cybersecurity tasks. ACM Computing Surveys, 57(8), 1-41.
+\bibitem{b4} Wan, Y., Shu, J., Sui, Y., Xu, G., Zhao, Z., Wu, J., \& Yu, P. (2019, November). Multi-modal attention network learning for semantic source code retrieval. In 2019 34th IEEE/ACM International Conference on Automated Software Engineering (ASE) (pp. 13-25). IEEE.
+\bibitem{b5} Brauckmann, A., Goens, A., Ertel, S., \& Castrillon, J. (2020, February). Compiler-based graph representations for deep learning models of code. In Proceedings of the 29th International Conference on Compiler Construction (pp. 201-211).
+\bibitem{b6} Casey, B., Santos, J. C., \& Perry, G. (2025). A survey of source code representations for machine learning-based cybersecurity tasks. ACM Computing Surveys, 57(8), 1-41.
 \end{thebibliography}
 \end{document}
