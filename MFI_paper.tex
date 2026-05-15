@@ -100,20 +100,20 @@ void foo() {
 \end{lstlisting}
 
 \subsection{Reprezentacje Leksykalne (Token-based)}
-Reprezentacja oparta na tokenach traktuje kod źródłowy jako wolny tekst lub płaską sekwencję znaków. Proces ten polega na konwersji kodu na listę tokenów, gdzie pojedynczym tokenem może być każde wyodrębnione słowo, a także każdy znak specjalny, taki jak nawias czy średnik.
+Reprezentacja oparta na tokenach traktuje kod źródłowy jako płaską sekwencję znaków. Reprezentacja polega na konwersji kodu na listę tokenów, gdzie pojedynczym tokenem może być pojedyńczy znak lub sekwencja kilku znaków.
 
 Można wyróżnić kilka głównych podejść do podziału kodu na tokeny \cite{b1}:
 \begin{itemize}
-    \item Tokenizacja na poziomie słów - token reprezentuje wyrazy lub znaki specjalne.
+    \item Tokenizacja na poziomie wyrazów - token reprezentuje wyrazy lub znaki specjalne.
     \item Tokenizacja na poziomie znaków - token reprezentuje pojedyńcze znaki.
-    \item Tokenizacja na poziomie podsłów - kompromis między znakami, a słowami.
+    \item Tokenizacja na poziomie podsłów - kompromis między znakami, a wyrazami.
     \item Tokenizacja N-gram - token reprezentuje n-elementową sekwencję, np. pierwszy token to "void foo", a następny to "foo()", co dodaje informacje o kontekście sąsiadujących wyrazów.
 \end{itemize}
 
 \begin{lstlisting}[
     basicstyle=\ttfamily\small,
     breaklines=true,
-    caption={Reprezentacja kodu w formie ztokenizowanej na poziomie słów \cite{b2}},
+    caption={Reprezentacja kodu w formie ztokenizowanej na poziomie wyrazów \cite{b2}},
     frame=tb
 ]
 ['void', 'foo', '(', ')', '{', 'int', 'x', '=', 'source', '(', ')', ';', 
@@ -148,7 +148,7 @@ Gdzie operator $[ ; ]$ oznacza konkatenację wektorów stanów ukrytych ($h$) or
 \subsection{Reprezentacje Semantyczne (Graph-based)}
 Reprezentacja grafowa modeluje kod źródłowy z naciskiem na jego semantykę oraz relacje między instrukcjami. W tym podejściu program transformowany jest w graf, w którym węzły najczęściej reprezentują bloki kodu lub konkretne instrukcje, a krawędzie określają przepływ sterowania lub danych.
 
-Istnieje wiele wariantów reprezentacji grafowej, opierających się na przepływie sterowania (Control Flow Graph, CFG), przepływie danych (Data Flow Graph, DFG) czy grafie zależności programowej (Program Dependency Graph, PDG), łączącym cechy obydwu podejść \cite{b4}. Rysunek \ref{fig:graph_representation} przedstawia przykładową reprezentację kodu źródłowego w formie grafu przepływu sterowania CFG oraz grafu zależności programowej PDG.
+Istnieje wiele wariantów reprezentacji grafowej, można wyróżnić reprezentacje oparte na przepływie sterowania (Control Flow Graph, CFG), przepływie danych (Data Flow Graph, DFG) czy grafie zależności programowej (Program Dependency Graph, PDG), łączącym cechy obydwu podejść \cite{b4}. Rysunek \ref{fig:graph_representation} przedstawia przykładową reprezentację kodu źródłowego w formie grafu przepływu sterowania CFG oraz grafu zależności programowej PDG.
 
 \begin{figure}[h]
     \centering
@@ -164,9 +164,9 @@ h_{v,t+1}^{cfg} &= GRU(h_{v,t}^{cfg}, m_{v,t+1})
 \end{align}
 
 \subsection{Reprezentacje Hybrydowe i Pośrednie}
-Podejścia hybrydowe integrują wiele modalności naraz (np. tokeny, drzewa AST i grafy CFG) w celu uzyskania kompleksowej reprezentacji kodu źródłowego. Takie rozwiązanie kompensuje wady pojedynczych metod, łącząc wiedzę o sekwencji, gramatyce i logice wykonania.
+Podejścia hybrydowe integrują wiele modalności naraz w celu uzyskania kompleksowej reprezentacji kodu źródłowego. Takie rozwiązanie kompensuje wady pojedynczych metod, łącząc wiedzę o sekwencji, gramatyce i logice wykonania.
 
-Doskonałym przykładem tego podejścia jest sieć MMAN (Multi-Modal Attention Network) \cite{b4}. Przetwarza ona każdą reprezentację dedykowanym jej modelem (LSTM dla tokenów, Tree-LSTM dla AST oraz GGNN dla CFG), a następnie wykorzystuje mechanizm uwagi (ang. \textit{attention}). Mechanizm ten przypisuje wagi ($\alpha$) poszczególnym elementom wewnątrz każdej modalności, co pozwala zidentyfikować fragmenty najbardziej istotne dla semantyki programu. Ostateczna, wielomodalna reprezentacja programu $x$ powstaje poprzez konkatenację średnich ważonych z każdego modelu i transformację przez macierz wag $W$ \cite{b4}:
+Przykładem tego podejścia jest sieć MMAN (Multi-Modal Attention Network) zaproponowana przez Wana i in. \cite{b4}. Przetwarza ona każdą reprezentację dedykowanym jej modelem (LSTM dla tokenów, Tree-LSTM dla AST oraz GGNN dla CFG), a następnie wykorzystuje mechanizm uwagi (ang. \textit{attention}). Mechanizm ten przypisuje wagi ($\alpha$) poszczególnym elementom wewnątrz każdej modalności, co pozwala zidentyfikować fragmenty najbardziej istotne dla semantyki programu. Ostateczna, wielomodalna reprezentacja programu $x$ powstaje poprzez konkatenację średnich ważonych z każdego modelu i transformację przez macierz wag $W$ \cite{b4}:
 \begin{equation}
 x = W[\sum_{i} \alpha_i^{tok} h_i^{tok}; \sum_{i} \alpha_i^{ast} h_i^{ast}; \sum_{i} \alpha_i^{cfg} h_i^{cfg}]
 \end{equation}
