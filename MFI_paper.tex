@@ -62,7 +62,7 @@ Warszawa, Polska \\
 \IEEEauthorblockA{\textit{Wydział Elektryczny} \\
 \textit{Politechnika Warszawska}\\
 Warszawa, Polska \\
-01178878@pw.edu.pl}
+01178832@pw.edu.pl}
 \and
 }
 
@@ -174,7 +174,64 @@ x = W[\sum_{i} \alpha_i^{tok} h_i^{tok}; \sum_{i} \alpha_i^{ast} h_i^{ast}; \sum
 Dzięki takiej fuzji model jest w stanie jednocześnie skupić uwagę na istotnej nazwie zmiennej z reprezentacji leksykalnej, kluczowym węźle operacyjnym z drzewa AST oraz strategicznym rozgałęzieniu logiki w grafie CFG.
 
 \section{Zastosowanie reprezentacji kodu źródłowego w problemach inżynierii oprogramowania}
-tutaj o taskach SE w jakich stosuje się reprezentację kodu źródłowego czyli wykrywanie podatności, podsumowywanie kodu, detekcja klonowania itp.
+Reprezentacje kodu źródłowego są wykorzystywane w wielu zadaniach inżynierii oprogramowania, w których konieczne jest automatyczne rozumienie, klasyfikowanie, porównywanie lub generowanie kodu. Ich główną rolą jest przekształcenie programu z postaci tekstowej do formy możliwej do przetwarzania przez modele uczenia głębokiego. W zależności od charakteru problemu model może potrzebować informacji leksykalnej, syntaktycznej, semantycznej albo połączenia kilku poziomów reprezentacji.
+W literaturze zadania wykorzystujące reprezentacje kodu można podzielić na kilka głównych grup: zadania typu code-code, w których wejściem i wyjściem jest kod; zadania predykcyjne, w których model przewiduje właściwości programu; zadania code-text, gdzie kod jest tłumaczony na opis tekstowy; oraz zadania text-code, w których na podstawie opisu tekstowego wyszukuje się lub generuje kod \cite{b2}. Tabela \ref{tab:se_tasks} przedstawia najczęściej wskazywane zastosowania reprezentacji kodu źródłowego.
+
+\begin{table}[h]
+\centering
+\caption{Przykładowe zastosowania reprezentacji kodu źródłowego w inżynierii oprogramowania}
+\label{tab:se_tasks}
+\small
+\begin{tabular}{|p{2.4cm}|p{4.7cm}|}
+\hline
+\textbf{Kategoria zadania} & \textbf{Przykładowe zastosowania} \\
+\hline
+Code-code & Detekcja klonów kodu, wykrywanie podobieństwa kodu, naprawa programów, uzupełnianie kodu, generowanie kodu \\
+\hline
+Code-prediction & Wykrywanie błędów, wykrywanie podatności, klasyfikacja kodu, predykcja wydajności, wykrywanie code smells \\
+\hline
+Code-text & Podsumowywanie kodu, generowanie nazw metod lub identyfikatorów, automatyczna dokumentacja \\
+\hline
+Text-code & Wyszukiwanie kodu na podstawie zapytania tekstowego, synteza programu z opisu naturalnego \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Detekcja klonów kodu}
+Jednym z najczęstszych zastosowań reprezentacji kodu źródłowego jest detekcja klonów kodu. Celem tego zadania jest określenie, czy dwa fragmenty programu są do siebie podobne lub realizują tę samą funkcjonalność. Klony mogą być niemal identyczne tekstowo, różnić się nazwami zmiennych, zawierać zmienioną strukturę instrukcji albo mieć zupełnie inną implementację przy zachowaniu tej samej semantyki.
+W prostych przypadkach wystarczające mogą być reprezentacje tokenowe, ponieważ zachowują kolejność słów kluczowych, operatorów i identyfikatorów. Dla bardziej złożonych klonów stosuje się reprezentacje drzewiaste, takie jak AST, które pozwalają porównywać strukturę składniową programu. W przypadku klonów semantycznych przydatne są reprezentacje grafowe, np. CFG, DFG lub PDG, ponieważ umożliwiają modelowanie przepływu sterowania i danych. W literaturze zadanie clone detection jest jednym z podstawowych problemów, w których porównuje się skuteczność różnych reprezentacji kodu \cite{b3}.
+
+\subsection{Wykrywanie podatności i analiza bezpieczeństwa}
+Reprezentacje kodu są szeroko stosowane w zadaniach związanych z cyberbezpieczeństwem, szczególnie w wykrywaniu podatności. Celem takiego modelu jest klasyfikacja fragmentu programu jako podatnego lub bezpiecznego. W tym przypadku sama informacja tekstowa często nie wystarcza, ponieważ podatność może wynikać z zależności między wejściem użytkownika, przepływem wartości oraz miejscem, w którym dana wartość zostaje wykorzystana.
+Dlatego w analizie bezpieczeństwa często stosuje się reprezentacje grafowe i hybrydowe, np. CFG, DFG, PDG lub CPG. Pozwalają one uchwycić zależności sterowania i danych, które są istotne przy wykrywaniu takich problemów jak niebezpieczne użycie bufora, błędna walidacja wejścia, podatności typu injection albo niewłaściwe użycie API. Przegląd Casey i in. wskazuje, że w zadaniach cyberbezpieczeństwa szczególnie popularne są reprezentacje grafowe, a jednym z najczęściej analizowanych zadań jest właśnie vulnerability detection \cite{b6}.
+
+\subsection{Wykrywanie błędów i lokalizacja defektów}
+Kolejnym zastosowaniem jest wykrywanie błędów oraz lokalizacja defektów w kodzie. Modele uczenia głębokiego mogą przewidywać, czy dany fragment programu zawiera błąd, wskazywać prawdopodobne miejsce defektu albo wspierać proces debugowania. W takich zadaniach wykorzystywane są zarówno reprezentacje tokenowe, jak i syntaktyczne oraz grafowe.
+Reprezentacje tokenowe mogą być wystarczające przy wykrywaniu prostych wzorców błędów, np. błędnych nazw zmiennych, niewłaściwych operatorów lub typowych antywzorców składniowych. Reprezentacje AST pozwalają analizować strukturę programu i relacje między instrukcjami, natomiast reprezentacje grafowe są użyteczne wtedy, gdy błąd zależy od przepływu sterowania lub danych. Z tego powodu bug detection i bug localization należą do najważniejszych zadań predykcyjnych w obszarze reprezentacji programów \cite{b1}.
+
+\subsection{Klasyfikacja kodu źródłowego}
+Reprezentacje kodu źródłowego są także stosowane w klasyfikacji programów. Zadanie to polega na przypisaniu fragmentu kodu do jednej z wcześniej zdefiniowanych kategorii. Może to być klasyfikacja według funkcjonalności, typu algorytmu, stylu implementacji, rodzaju podatności lub jakości kodu.
+W takim zastosowaniu model musi nauczyć się rozpoznawać charakterystyczne cechy programu. Reprezentacje tokenowe pozwalają uchwycić słowa kluczowe i nazwy API, reprezentacje AST opisują strukturę składniową, a reprezentacje grafowe mogą dodatkowo odzwierciedlać sposób działania programu. Siow i in. wykorzystują klasyfikację kodu jako jedno z trzech głównych zadań do porównania reprezentacji feature-based, sequence-based, tree-based i graph-based \cite{b3}.
+
+\subsection{Podsumowywanie kodu i automatyczna dokumentacja}
+W zadaniach typu code-text reprezentacja kodu służy do wygenerowania opisu w języku naturalnym. Najbardziej typowym przykładem jest code summarization, czyli automatyczne tworzenie krótkiego opisu działania funkcji, metody lub fragmentu programu. Takie podejście może wspierać dokumentowanie kodu, przeglądy kodu oraz szybsze rozumienie dużych repozytoriów.
+W tym przypadku model musi przekształcić reprezentację programu w reprezentację tekstową. Często stosuje się architektury encoder-decoder, mechanizmy attention oraz modele sekwencyjne lub transformery. Reprezentacja wejściowa może bazować na tokenach, AST albo podejściu hybrydowym. Reprezentacje drzewiaste i grafowe są przydatne, ponieważ pozwalają modelowi lepiej zrozumieć strukturę funkcji, a nie tylko kolejność tokenów \cite{b1}.
+
+\subsection{Wyszukiwanie kodu}
+Wyszukiwanie kodu polega na odnalezieniu fragmentów programu odpowiadających zapytaniu użytkownika. Zapytanie może być podane w języku naturalnym, np. jako opis funkcji, którą użytkownik chce znaleźć. Model musi wtedy nauczyć się wspólnej przestrzeni reprezentacji dla tekstu naturalnego i kodu źródłowego.
+W tym zadaniu często stosuje się reprezentacje hybrydowe, ponieważ ważne są zarówno nazwy identyfikatorów i tokeny, jak i struktura programu. Przykładem jest podejście MMAN, które łączy reprezentację tokenową, AST oraz CFG, a następnie wykorzystuje mechanizm attention do wyboru najważniejszych elementów każdej modalności \cite{b4}. Dzięki temu model może dopasowywać zapytania tekstowe do fragmentów kodu nie tylko na podstawie podobieństwa słów, ale także na podstawie sensu programu.
+
+\subsection{Naprawa, uzupełnianie i generowanie kodu}
+Reprezentacje kodu są również wykorzystywane w zadaniach generatywnych. Należą do nich automatyczna naprawa programów, uzupełnianie kodu, generowanie fragmentów programu oraz synteza kodu na podstawie opisu. W takich zadaniach model nie tylko analizuje kod, ale również tworzy nowy lub zmodyfikowany fragment programu.
+W program repair model może na przykład otrzymać błędny kod i wygenerować poprawkę. W code completion przewiduje brakujący token, wyrażenie lub instrukcję. W program synthesis model generuje kod na podstawie specyfikacji lub opisu tekstowego. Reprezentacje sekwencyjne są naturalne dla tego typu zadań, ponieważ kod można traktować jako język podobny do tekstu naturalnego, ale coraz częściej wykorzystuje się również AST i grafy, aby zachować poprawność składniową oraz semantyczną generowanego programu \cite{b2}.
+
+\subsection{Optymalizacja programów i zadania kompilatorowe}
+Osobną grupę zastosowań stanowią zadania związane z kompilatorami i optymalizacją programów. Modele uczenia głębokiego mogą przewidywać, która wersja optymalizacji będzie najkorzystniejsza, czy fragment kodu powinien zostać wykonany na CPU czy GPU, albo jaki parametr optymalizacji należy wybrać. W tego typu problemach szczególnie istotne są reprezentacje wynikające z analizy kompilatora, np. AST, grafy przepływu sterowania i danych oraz reprezentacje pośrednie.
+Brauckmann i in. wskazują, że w zadaniach kompilatorowych strukturalne reprezentacje kodu mogą być bardziej odpowiednie niż proste sekwencje tokenów, ponieważ wiele decyzji optymalizacyjnych zależy od zależności danych, przepływu sterowania oraz struktury pętli \cite{b5}. Reprezentacje grafowe pozwalają więc modelom lepiej uchwycić właściwości programu istotne z punktu widzenia wydajności.
+
+\subsection{Znaczenie doboru reprezentacji do zadania}
+Zastosowanie reprezentacji kodu źródłowego zależy bezpośrednio od charakteru problemu. Zadania wymagające głównie informacji leksykalnej, takie jak proste podobieństwo kodu lub uzupełnianie tokenów, mogą korzystać z reprezentacji tokenowych. Zadania wymagające rozumienia struktury programu, np. klasyfikacja funkcji lub detekcja klonów składniowych, często wykorzystują AST. Natomiast zadania zależne od semantyki, takie jak wykrywanie podatności, analiza przepływu danych czy detekcja klonów funkcjonalnych, wymagają reprezentacji grafowych lub hybrydowych.
+Oznacza to, że reprezentacja kodu źródłowego jest nie tylko technicznym etapem przygotowania danych, ale jednym z kluczowych elementów projektowania systemu uczenia głębokiego dla inżynierii oprogramowania. To ona decyduje, które informacje o programie będą dostępne dla modelu i jakie zależności model będzie mógł nauczyć się rozpoznawać.
 
 \section{Analiza skuteczności reprezentacji kodu źródłowego w problemach inżynierii oprogramowania}
 
