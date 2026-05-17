@@ -235,9 +235,11 @@ Oznacza to, że reprezentacja kodu źródłowego jest nie tylko technicznym etap
 
 \section{Analiza skuteczności reprezentacji kodu źródłowego w problemach inżynierii oprogramowania}
 
-W celu weryfikacji wcześniej omawianych metod reprezentacji kodu przeprowadzono badanie empiryczne. 
-Problemem badawczym była klasyfikacja kodu źródłowego, polegająca na przypisaniu danego programu do jednej 
-z klas odpowiadającej problemowi algorytmicznemu.
+W celu weryfikacji skuteczności omawianych wcześniej metod reprezentacji kodu przeprowadzono badanie 
+empiryczne. Jako dodatkowy punkt odniesienia w eksperymentach uwzględniono również klasyczne podejście 
+oparte na cechach (feature-based), pozwalające na ocenę zysku płynącego z zastosowania modeli 
+głębokiego uczenia. Problemem badawczym była klasyfikacja kodu źródłowego, polegająca na 
+przypisaniu danego programu do jednej z klas odpowiadającej problemowi algorytmicznemu.
 
 \subsection{Zbiór danych i przetwarzanie wstępne}
 Do wykonania eksperymentów wykorzystano zbiór danych Project CodeNet, który zawiera kilkanaście milionów 
@@ -255,7 +257,7 @@ W zależności od badanej reprezentacji, zastosowano inne sposoby wstępnego prz
     \item \textbf{Reprezentacja oparta na cechach (Feature-based):} Kod potraktowano jako tekst i poddano wektoryzacji metodą TF-IDF. Zbudowano słownik 
     oceniając ważność tokenu proporcjonalnie do częstości jego występowania w danym programie, a odwrotnie proporcjonalnie do jego częstotliwości występowania 
     w całym zbiorze programów. W celu redukcji wymiarowości i czasu przeprowadzenia eksperymentu ograniczono słownik do 5000 najczęstszych tokenów.
-    \item \textbf{Reprezentacja leksykalna (Sequence-based):} Kod źródłowy ztokenizowano z wykorzystaniem podziału na podsłowa, a następnie zamieniono na 
+    \item \textbf{Reprezentacja leksykalna (Token-based):} Kod źródłowy ztokenizowano z wykorzystaniem podziału na podsłowa, a następnie zamieniono na 
     sekwencje numeryczne, przypisując każdemu tokenowi unikalny identyfikator ze słownika ograniczonego do 10 000 najczęstszych słów. Sekwencje wyrównano 
     do stałej długości 150 tokenów.
     \item \textbf{Reprezentacja syntaktyczna (Tree-based):} Programy przeparsowano do postaci drzew składni abstrakcyjnej (AST). Węzłom drzewa
@@ -292,7 +294,7 @@ Wyniki eksperymentów dla pełnego zbioru danych (90 000 próbek) oraz zbioru zr
 \hline
 XGBoost (feature-based) & 30.20\% & $\sim$ 0.2 min & 17.05\% \\
 \hline
-BiLSTM (sequence-based) & 93.39\% & $\sim$ 8.5 min & 93.16\% \\
+BiLSTM (token-based) & 93.39\% & $\sim$ 8.5 min & 93.16\% \\
 \hline
 Tree-LSTM (tree-based) & 93.30\% & $\sim$ 133 min & 90.10\% \\
 \hline
