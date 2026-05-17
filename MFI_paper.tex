@@ -10,6 +10,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{tabularx}
 
 \graphicspath{ {./figures/} }
 
@@ -43,7 +44,7 @@
 \IEEEauthorblockA{\textit{Wydział Elektryczny} \\
 \textit{Politechnika Warszawska}\\
 Warszawa, Polska \\
-01178878@pw.edu.pl}
+01169162@pw.edu.pl}
 \and
 \IEEEauthorblockN{2\textsuperscript{nd} inż. Rafał Pyłko}
 \IEEEauthorblockA{\textit{Wydział Elektryczny} \\
@@ -55,7 +56,7 @@ Warszawa, Polska \\
 \IEEEauthorblockA{\textit{Wydział Elektryczny} \\
 \textit{Politechnika Warszawska}\\
 Warszawa, Polska \\
-01178878@pw.edu.pl}
+01178844@pw.edu.pl}
 \and
 \IEEEauthorblockN{4\textsuperscript{th} inż. Bartosz Dybowski}
 \IEEEauthorblockA{\textit{Wydział Elektryczny} \\
@@ -176,8 +177,92 @@ Dzięki takiej fuzji model jest w stanie jednocześnie skupić uwagę na istotne
 tutaj o taskach SE w jakich stosuje się reprezentację kodu źródłowego czyli wykrywanie podatności, podsumowywanie kodu, detekcja klonowania itp.
 
 \section{Analiza skuteczności reprezentacji kodu źródłowego w problemach inżynierii oprogramowania}
-Jakieś papiery z danymi o tym gdzie dana reprezentacja się najlepiej spisuje, ewentualnie zrobić swoją implementację i pokazać wyniki.
 
+W celu weryfikacji wcześniej omawianych metod reprezentacji kodu przeprowadzono badanie empiryczne. 
+Problemem badawczym była klasyfikacja kodu źródłowego, polegająca na przypisaniu danego programu do jednej 
+z klas odpowiadającej problemowi algorytmicznemu.
+
+\subsection{Zbiór danych i przetwarzanie wstępne}
+Do wykonania eksperymentów wykorzystano zbiór danych Project CodeNet, który zawiera kilkanaście milionów 
+próbek kodu z platform konkursowych i został stworzony z myślą o trenowaniu modeli w zadaniach analizy 
+oprogramowania. Z tej bazy wybrano wyłącznie kody źródłowe napisane w języku Python, będące poprawnym 
+rozwiązaniem danego problemu algorytmicznego (posiadające status ,,Accepted'').
+
+W ramach eksperymentu wybrano 300 najpopularniejszych klas problemów. Zbiór wyfiltrowano, 
+używając jedynie 300 próbek na klasę, co dało łącznie bazę 90 000 programów. Dane zostały także podzielone na 
+zbiór treningowy (80\%) i testowy (20\%). Przygotowano także zredukowany wariant danych liczący po 100 próbek 
+na klasę (łącznie 30 000 programów), aby zbadać wpływ wielkości zbioru na zdolność do generalizacji modeli.
+
+W zależności od badanej reprezentacji, zastosowano inne sposoby wstępnego przetwarzania danych:
+\begin{itemize}
+    \item \textbf{Reprezentacja oparta na cechach (Feature-based):} Kod potraktowano jako tekst i poddano wektoryzacji metodą TF-IDF. Zbudowano słownik 
+    oceniając ważność tokenu proporcjonalnie do częstości jego występowania w danym programie, a odwrotnie proporcjonalnie do jego częstotliwości występowania 
+    w całym zbiorze programów. W celu redukcji wymiarowości i czasu przeprowadzenia eksperymentu ograniczono słownik do 5000 najczęstszych tokenów.
+    \item \textbf{Reprezentacja leksykalna (Sequence-based):} Kod źródłowy ztokenizowano z wykorzystaniem podziału na podsłowa, a następnie zamieniono na 
+    sekwencje numeryczne, przypisując każdemu tokenowi unikalny identyfikator ze słownika ograniczonego do 10 000 najczęstszych słów. Sekwencje wyrównano 
+    do stałej długości 150 tokenów.
+    \item \textbf{Reprezentacja syntaktyczna (Tree-based):} Programy przeparsowano do postaci drzew składni abstrakcyjnej (AST). Węzłom drzewa
+    przypisano wyłącznie informacje o ich typie strukturalnym, pozbawiając je nazw zmiennych i stałych.
+    \item \textbf{Reprezentacja hybrydowa:} Zbudowane drzewo AST wzbogacono o informacje leksykalne (m.in. nazwy zmiennych, funkcji i literały). 
+    Do każdego węzła, oprócz wektora jego typu, dołączono wektor oryginalnego tekstu przepuszczonego przez sieć BiLSTM. 
+    Takie podejście wymusza na modelu jednoczesną analizę topologii drzewa oraz leksyki programu.
+\end{itemize}
+
+\subsection{Przebieg eksperymentów i konfiguracja modeli}
+Eksperyment podzielono na cztery warianty badawcze, trenując następujące modele:
+\begin{enumerate}
+    \item \textbf{XGBoost (baseline)} na wektorach TF-IDF jako architekturę bazową.
+    \item \textbf{BiLSTM (token-based)} dla reprezentacji leksykalnej.
+    \item \textbf{Tree-LSTM (tree-based)} dla reprezentacji syntaktycznej AST.
+    \item \textbf{Hybrydowe Tree-LSTM (hybrid)} dla połączonej reprezentacji syntaktyczno-leksykalnej.
+\end{enumerate}
+
+Modele głębokie trenowano przy użyciu optymalizatora Adam, stosując mechanizm wczesnego 
+zatrzymywania z tolerancją 5 epok i maskymalną liczbą epok równą 50.
+
+\subsection{Wyniki i analiza}
+
+Wyniki eksperymentów dla pełnego zbioru danych (90 000 próbek) oraz zbioru zredukowanego (30 000 próbek) przedstawiono w Tabeli \ref{tab:wyniki}.
+
+\begin{table}[htbp]
+\centering
+\caption{Dokładność klasyfikacji i czas uczenia dla różnych reprezentacji kodu}
+\label{tab:wyniki}
+\renewcommand{\arraystretch}{1.4} 
+\begin{tabular}{|p{2.0cm}|p{1.6cm}|p{1.6cm}|p{1.6cm}|}
+\hline
+\textbf{Model (Reprezentacja)} & \textbf{Dokładność (90k próbek)} & \textbf{Czas uczenia (90k próbek)} & \textbf{Dokładność (30k próbek)} \\
+\hline
+XGBoost (feature-based) & 30.20\% & $\sim$ 0.2 min & 17.05\% \\
+\hline
+BiLSTM (sequence-based) & 93.39\% & $\sim$ 8.5 min & 93.16\% \\
+\hline
+Tree-LSTM (tree-based) & 93.30\% & $\sim$ 133 min & 90.10\% \\
+\hline
+Hybrydowe Tree-LSTM (hybrid) & \textbf{97.37\%} & $\sim$ 64 min & \textbf{95.09\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+Na podstawie uzyskanych wyników sformułowano poniższe wnioski:
+
+\begin{itemize}
+    \item \textbf{Niska skuteczność wektoryzacji TF-IDF:} Model XGBoost uzyskał zaledwie 30.20\% dokładności (spadek do 17.05\% na zredukowanym zbiorze). 
+    Reprezentacje oparte wyłącznie na cechach ignorują strukturę i przepływ sterowania programu, co drastycznie ogranicza ich zdolność uogólniania.
+    
+    \item \textbf{Wpływ wielkości zbioru na generalizację:} Modele leksykalne (BiLSTM) wykazują wyższą stabilność na małych zbiorach danych (spadek 
+    zaledwie o 0.23 punktu procentowego) w porównaniu do czystych drzew AST (spadek o 3.20 p.p.). Wynika to z faktu, że tokeny dostarczają 
+    silnego kontekstu bezpośrednio z nazw zmiennych, podczas gdy abstrakcyjna topologia drzewa wymaga więcej danych do wyuczenia ukrytych wzorców.
+    
+    \item \textbf{Dominacja reprezentacji hybrydowych:} Wzbogacenie struktury AST o osadzenia tekstowe pozwala na uzyskanie najwyższej 
+    dokładności (97.37\% na pełnym zbiorze oraz 95.09\% na zredukowanym). Wynik ten potwierdza \cite{b3}, że połączenie szkieletu 
+    syntaktycznego i leksyki tworzy najbardziej kompletną reprezentację kodu.
+    
+    \item \textbf{Złożoność obliczeniowa a zbieżność:} Mimo że najszybszym modelem uczenia głębokiego pozostaje BiLSTM ($\sim$8.5 min), 
+    podejście hybrydowe stanowi optymalny kompromis. Zastosowanie dodatkowego kontekstu leksykalnego w grafie nie tylko maksymalizuje 
+    skuteczność, ale też o ponad połowę skraca czas treningu względem czystego Tree-LSTM (z $\sim$133 do $\sim$64 minut), pozwalając 
+    na znacznie szybszą zbieżność sieci.
+\end{itemize}
 \section{Podsumowanie}
 Wnioski dotyczące wyboru optymalnej reprezentacji w zależności od dostępnych zasobów i specyfiki problemu.
 
